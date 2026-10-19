@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GestureSys v3.0 · 15 Signs + AI Mouse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <div class="shell">
+
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M8 24V12a2 2 0 014 0v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M12 18V10a2 2 0 014 0v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M16 18V11a2 2 0 014 0v7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M20 18v-5a2 2 0 014 0v7a6 6 0 01-12 0v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">GESTURE<span class="accent">SYS</span> <span class="brand-ver">v3.0</span></h1>
+          <p class="brand-sub">15 HAND SIGNS · ASL ALPHABET · VIRTUAL AI MOUSE</p>
+        </div>
+      </div>
+
+      <div class="header-meta">
+        <div class="status-pill" id="status-pill">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">OFFLINE</span>
+        </div>
+        <div class="metric" title="Frames per second">
+          <span class="metric-k">FPS</span>
+          <span class="metric-v" id="fps-val">--</span>
+        </div>
+        <div class="metric" title="Hands in frame">
+          <span class="metric-k">HANDS</span>
+          <span class="metric-v" id="hands-val">0</span>
+        </div>
+        <div class="metric" title="Detection mode">
+          <span class="metric-k">MODE</span>
+          <span class="metric-v accent" id="mode-badge">WORD</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Main grid ──────────────────────────────────────── -->
+    <main class="main-grid">
+
+      <!-- LEFT: Camera -->
+      <section class="panel camera-panel">
+        <div class="panel-hdr">
+          <span class="panel-title">LIVE FEED</span>
+          <div class="rec" id="rec">
+            <span class="rec-dot"></span><span>REC</span>
+          </div>
+        </div>
+
+        <div class="viewport" id="viewport">
+          <img id="video-feed" src="" alt="Camera"/>
+          <div class="cam-overlay" id="cam-overlay">
+            <div class="cam-off-icon">
+              <svg viewBox="0 0 56 56" fill="none">
+                <circle cx="28" cy="28" r="26" stroke="currentColor" stroke-width="1.4"
+                        stroke-dasharray="5 4" opacity=".35"/>
+                <path d="M20 22v-3a8 8 0 0116 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <rect x="12" y="22" width="32" height="20" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="28" cy="32" r="5" stroke="currentColor" stroke-width="1.8"/>
+                <line x1="10" y1="10" x2="46" y2="46" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" opacity=".5"/>
+              </svg>
+            </div>
+            <p class="cam-off-title">CAMERA OFFLINE</p>
+            <p class="cam-off-sub">Press START to activate detection</p>
+          </div>
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+        </div>
+
+        <div class="cam-controls">
+          <button class="btn-start" id="toggle-btn" onclick="toggleCamera()">
+            <span id="btn-icon">▶</span>
+            <span id="btn-label">START DETECTION</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT: Info panel -->
+      <aside class="info-col">
+
+        <!-- Gesture display -->
+        <div class="panel gesture-panel">
+          <div class="panel-hdr">
+            <span class="panel-title">DETECTED SIGN</span>
+            <div class="panel-actions">
+              <span class="conf-chip" id="conf-chip">—</span>
+              <button class="icon-btn" onclick="speakCurrent()" title="Speak [S]">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M3 7h3l4-4v14l-4-4H3V7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M14 7a5 5 0 010 6M16.5 4.5a9 9 0 010 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="gesture-body">
+            <div class="gesture-emoji" id="g-emoji">✋</div>
+            <div class="gesture-label idle" id="g-label">WAITING…</div>
+          </div>
+
+          <div class="conf-bar-wrap">
+            <div class="conf-bar-track">
+              <div class="conf-bar" id="conf-bar"></div>
+              <div class="conf-glow" id="conf-glow"></div>
+            </div>
+            <span class="conf-pct" id="conf-pct">0%</span>
+          </div>
+        </div>
+
+        <!-- Mode selector (3 modes) -->
+        <div class="panel mode-panel">
+          <div class="panel-hdr">
+            <span class="panel-title">DETECTION MODE</span>
+          </div>
+          <div class="mode-grid">
+            <button class="mode-btn active" id="mode-word" onclick="setMode('word')">
+              <span class="mode-emoji">💬</span>
+              <span class="mode-name">WORD</span>
+              <span class="mode-desc">15 gesture labels</span>
+            </button>
+            <button class="mode-btn" id="mode-alpha" onclick="setMode('alpha')">
+              <span class="mode-emoji">🔤</span>
+              <span class="mode-name">ALPHA</span>
+              <span class="mode-desc">ASL letter mapping</span>
+            </button>
+            <button class="mode-btn mouse-mode-btn" id="mode-mouse" onclick="setMode('mouse')">
+              <span class="mode-emoji">🖱️</span>
+              <span class="mode-name">MOUSE</span>
+              <span class="mode-desc">Control cursor</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mouse reference (shown only in mouse mode) -->
+        <div class="panel mouse-ref-panel" id="mouse-ref-panel" style="display:none">
+          <div class="panel-hdr">
+            <span class="panel-title">MOUSE GESTURE MAP</span>
+            <span class="panel-title mouse-live-label" id="mouse-live-label">IDLE</span>
+          </div>
+          <div class="mouse-ref-grid">
+            <div class="mref-row" data-action="mouse_move">        <span class="mref-emoji">☝️</span><span class="mref-gst">INDEX ONLY</span>  <span class="mref-arr">→</span><span class="mref-act move">MOVE</span></div>
+            <div class="mref-row" data-action="mouse_left_click">  <span class="mref-emoji">✌️</span><span class="mref-gst">IDX+MID NEAR</span><span class="mref-arr">→</span><span class="mref-act lclick">LEFT CLICK</span></div>
+            <div class="mref-row" data-action="mouse_double_click"><span class="mref-emoji">✌️</span><span class="mref-gst">IDX+MID WIDE</span><span class="mref-arr">→</span><span class="mref-act dclick">DOUBLE CLICK</span></div>
+            <div class="mref-row" data-action="mouse_drag">        <span class="mref-emoji">🤏</span><span class="mref-gst">THUMB PINCH</span> <span class="mref-arr">→</span><span class="mref-act drag">DRAG</span></div>
+            <div class="mref-row" data-action="mouse_right_click"> <span class="mref-emoji">🤙</span><span class="mref-gst">PINKY ONLY</span>  <span class="mref-arr">→</span><span class="mref-act rclick">RIGHT CLICK</span></div>
+            <div class="mref-row" data-action="mouse_scroll_up">   <span class="mref-emoji">🖐️</span><span class="mref-gst">OPEN PALM</span>   <span class="mref-arr">→</span><span class="mref-act scroll">SCROLL UP</span></div>
+            <div class="mref-row" data-action="mouse_scroll_down"> <span class="mref-emoji">✊</span><span class="mref-gst">FIST</span>        <span class="mref-arr">→</span><span class="mref-act scroll">SCROLL DN</span></div>
+          </div>
+        </div>
+
+        <!-- Legend (15 gestures, adapts to mode) -->
+        <div class="panel legend-panel">
+          <div class="panel-hdr">
+            <span class="panel-title">GESTURE LEGEND</span>
+            <span class="panel-title" id="legend-count" style="color:var(--accent)">15 SIGNS</span>
+          </div>
+          <div class="legend-grid" id="legend-grid"></div>
+        </div>
+
+      </aside>
+    </main>
+
+    <!-- ── History ────────────────────────────────────────── -->
+    <section class="panel history-panel">
+      <div class="panel-hdr">
+        <span class="panel-title">DETECTION HISTORY</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="hist-count" id="hist-count">0 entries</span>
+          <button class="ghost-btn" onclick="clearHistory()">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            CLEAR
+          </button>
+        </div>
+      </div>
+      <div class="history-scroll">
+        <div class="history-list" id="history-list">
+          <span class="hist-empty">No gestures detected yet</span>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- .shell -->
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
